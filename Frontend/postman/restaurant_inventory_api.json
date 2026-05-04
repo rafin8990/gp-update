@@ -1,0 +1,232 @@
+{
+    "info": {
+        "name": "Restaurant Inventory API",
+        "description": "API collection for Restaurant Inventory Management System",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Module 1: Procurement & Supplier Management",
+            "item": [
+                {
+                    "name": "Suppliers",
+                    "item": [
+                        {
+                            "name": "Get All Suppliers",
+                            "request": {
+                                "method": "GET",
+                                "url": "{{base_url}}/api/restaurant/suppliers"
+                            }
+                        },
+                        {
+                            "name": "Create Supplier",
+                            "request": {
+                                "method": "POST",
+                                "url": "{{base_url}}/api/restaurant/suppliers",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"name\": \"Fresh Foods Inc.\",\n    \"contact_person\": \"John Doe\",\n    \"email\": \"john@freshfoods.com\",\n    \"phone\": \"+1234567890\",\n    \"address\": \"123 Food Street, City\",\n    \"type\": \"food\",\n    \"payment_terms\": \"Net 30\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Purchase Orders",
+                    "item": [
+                        {
+                            "name": "Get All Purchase Orders",
+                            "request": {
+                                "method": "GET",
+                                "url": "{{base_url}}/api/restaurant/purchase-orders"
+                            }
+                        },
+                        {
+                            "name": "Create Purchase Order",
+                            "request": {
+                                "method": "POST",
+                                "url": "{{base_url}}/api/restaurant/purchase-orders",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"supplier_id\": \"SUP123\",\n    \"items\": [\n        {\n            \"item_id\": \"ITEM001\",\n            \"quantity\": 100,\n            \"unit_price\": 5.99\n        }\n    ],\n    \"expected_delivery_date\": \"2024-03-20\",\n    \"notes\": \"Regular weekly order\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Module 2: Stock Receiving & Inward",
+            "item": [
+                {
+                    "name": "Weighing Sessions",
+                    "item": [
+                        {
+                            "name": "Get All Weighing Sessions",
+                            "request": {
+                                "method": "GET",
+                                "url": "{{base_url}}/api/restaurant/weighing-sessions"
+                            }
+                        },
+                        {
+                            "name": "Create Weighing Session",
+                            "request": {
+                                "method": "POST",
+                                "url": "{{base_url}}/api/restaurant/weighing-sessions",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"grn_id\": \"GRN123\",\n    \"item_id\": \"ITEM001\",\n    \"measured_weight\": 50.5,\n    \"unit\": \"kg\",\n    \"device_id\": \"DEV001\",\n    \"operator_id\": \"OP001\",\n    \"notes\": \"Received in good condition\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "QR Labels",
+                    "item": [
+                        {
+                            "name": "Get All QR Labels",
+                            "request": {
+                                "method": "GET",
+                                "url": "{{base_url}}/api/restaurant/qr-labels"
+                            }
+                        },
+                        {
+                            "name": "Create QR Label",
+                            "request": {
+                                "method": "POST",
+                                "url": "{{base_url}}/api/restaurant/qr-labels",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"batch_code\": \"BATCH001\",\n    \"item_id\": \"ITEM001\",\n    \"storage_location_id\": \"LOC001\",\n    \"generated_by\": \"OP001\",\n    \"expiry_date\": \"2024-04-20\",\n    \"notes\": \"First batch of the month\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Module 3: Warehouse Management",
+            "item": [
+                {
+                    "name": "Storage Locations",
+                    "item": [
+                        {
+                            "name": "Get All Storage Locations",
+                            "request": {
+                                "method": "GET",
+                                "url": "{{base_url}}/api/restaurant/storage-locations"
+                            }
+                        },
+                        {
+                            "name": "Create Storage Location",
+                            "request": {
+                                "method": "POST",
+                                "url": "{{base_url}}/api/restaurant/storage-locations",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"name\": \"Cold Storage A1\",\n    \"type\": \"cold\",\n    \"capacity\": 1000,\n    \"location_code\": \"CS-A1\",\n    \"temperature_range\": {\n        \"min\": 2,\n        \"max\": 4\n    },\n    \"notes\": \"Main cold storage area\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Stock Movement Logs",
+                    "item": [
+                        {
+                            "name": "Get All Stock Movement Logs",
+                            "request": {
+                                "method": "GET",
+                                "url": "{{base_url}}/api/restaurant/stock-movement-logs"
+                            }
+                        },
+                        {
+                            "name": "Create Stock Movement Log",
+                            "request": {
+                                "method": "POST",
+                                "url": "{{base_url}}/api/restaurant/stock-movement-logs",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"item_id\": \"ITEM001\",\n    \"quantity\": 50,\n    \"movement_type\": \"transfer\",\n    \"from_location_id\": \"LOC001\",\n    \"to_location_id\": \"LOC002\",\n    \"reference_id\": \"TRF001\",\n    \"reference_type\": \"transfer\",\n    \"performed_by\": \"OP001\",\n    \"batch_code\": \"BATCH001\",\n    \"notes\": \"Transfer to kitchen storage\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Module 4: Kitchen Inventory Control",
+            "item": [
+                {
+                    "name": "Kitchen Users",
+                    "item": [
+                        {
+                            "name": "Get All Kitchen Users",
+                            "request": {
+                                "method": "GET",
+                                "url": "{{base_url}}/api/restaurant/kitchen-users"
+                            }
+                        },
+                        {
+                            "name": "Create Kitchen User",
+                            "request": {
+                                "method": "POST",
+                                "url": "{{base_url}}/api/restaurant/kitchen-users",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"name\": \"Chef John Smith\",\n    \"email\": \"john.smith@restaurant.com\",\n    \"role\": \"chef\",\n    \"notes\": \"Head chef of main kitchen\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:3004",
+            "type": "string"
+        }
+    ]
+}

@@ -1,0 +1,148 @@
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Network Background Pattern -->
+  <g opacity="0.2">
+    <path d="M0 0L800 600" stroke="white" stroke-width="0.5" />
+    <path d="M0 600L800 0" stroke="white" stroke-width="0.5" />
+    <path d="M400 0V600" stroke="white" stroke-width="0.5" />
+    <path d="M0 300H800" stroke="white" stroke-width="0.5" />
+    
+    <!-- Additional network lines -->
+    <path d="M200 0V600" stroke="white" stroke-width="0.5" />
+    <path d="M600 0V600" stroke="white" stroke-width="0.5" />
+    <path d="M0 150H800" stroke="white" stroke-width="0.5" />
+    <path d="M0 450H800" stroke="white" stroke-width="0.5" />
+    
+    <!-- Dots at intersections -->
+    <circle cx="200" cy="150" r="3" fill="white" />
+    <circle cx="200" cy="300" r="3" fill="white" />
+    <circle cx="200" cy="450" r="3" fill="white" />
+    <circle cx="400" cy="150" r="3" fill="white" />
+    <circle cx="400" cy="300" r="3" fill="white" />
+    <circle cx="400" cy="450" r="3" fill="white" />
+    <circle cx="600" cy="150" r="3" fill="white" />
+    <circle cx="600" cy="300" r="3" fill="white" />
+    <circle cx="600" cy="450" r="3" fill="white" />
+  </g>
+  
+  <!-- Warehouse Shelves -->
+  <g transform="translate(100, 150)">
+    <rect x="0" y="0" width="150" height="200" fill="#D4A76A" />
+    <rect x="10" y="10" width="130" height="40" fill="#B38B5D" />
+    <rect x="10" y="60" width="130" height="40" fill="#B38B5D" />
+    <rect x="10" y="110" width="130" height="40" fill="#B38B5D" />
+    <rect x="10" y="160" width="130" height="30" fill="#B38B5D" />
+    
+    <!-- Shelf Structure -->
+    <rect x="0" y="0" width="10" height="200" fill="#555555" />
+    <rect x="140" y="0" width="10" height="200" fill="#555555" />
+    <rect x="0" y="50" width="150" height="5" fill="#555555" />
+    <rect x="0" y="100" width="150" height="5" fill="#555555" />
+    <rect x="0" y="150" width="150" height="5" fill="#555555" />
+    
+    <!-- Boxes on Shelves -->
+    <rect x="20" y="15" width="30" height="30" fill="#E6C89C" />
+    <rect x="60" y="15" width="30" height="30" fill="#E6C89C" />
+    <rect x="100" y="15" width="30" height="30" fill="#E6C89C" />
+    
+    <rect x="20" y="65" width="30" height="30" fill="#E6C89C" />
+    <rect x="60" y="65" width="30" height="30" fill="#E6C89C" />
+    <rect x="100" y="65" width="30" height="30" fill="#E6C89C" />
+    
+    <rect x="20" y="115" width="30" height="30" fill="#E6C89C" />
+    <rect x="60" y="115" width="30" height="30" fill="#E6C89C" />
+    <rect x="100" y="115" width="30" height="30" fill="#E6C89C" />
+  </g>
+  
+  <!-- Barcode Scanner -->
+  <g transform="translate(300, 250)">
+    <rect x="0" y="0" width="80" height="60" fill="#333333" rx="5" />
+    <rect x="10" y="10" width="60" height="20" fill="#111111" />
+    <rect x="20" y="40" width="10" height="10" fill="#FF3333" />
+    <rect x="40" y="40" width="30" height="10" fill="#555555" />
+    <path d="M40 0V-30H60V0" stroke="#555555" stroke-width="5" />
+  </g>
+  
+  <!-- Large Box with Barcode -->
+  <g transform="translate(400, 200)">
+    <rect x="0" y="0" width="120" height="100" fill="#E6C89C" />
+    <rect x="10" y="10" width="100" height="20" fill="white" />
+    <g transform="translate(15, 15)">
+      <!-- Barcode lines -->
+      <rect x="0" y="0" width="2" height="10" fill="black" />
+      <rect x="4" y="0" width="1" height="10" fill="black" />
+      <rect x="7" y="0" width="3" height="10" fill="black" />
+      <rect x="12" y="0" width="2" height="10" fill="black" />
+      <rect x="16" y="0" width="1" height="10" fill="black" />
+      <rect x="19" y="0" width="2" height="10" fill="black" />
+      <rect x="23" y="0" width="3" height="10" fill="black" />
+      <rect x="28" y="0" width="1" height="10" fill="black" />
+      <rect x="31" y="0" width="2" height="10" fill="black" />
+      <rect x="35" y="0" width="3" height="10" fill="black" />
+      <rect x="40" y="0" width="1" height="10" fill="black" />
+      <rect x="43" y="0" width="2" height="10" fill="black" />
+      <rect x="47" y="0" width="1" height="10" fill="black" />
+      <rect x="50" y="0" width="3" height="10" fill="black" />
+      <rect x="55" y="0" width="2" height="10" fill="black" />
+      <rect x="59" y="0" width="1" height="10" fill="black" />
+      <rect x="62" y="0" width="3" height="10" fill="black" />
+      <rect x="67" y="0" width="1" height="10" fill="black" />
+      <rect x="70" y="0" width="2" height="10" fill="black" />
+      <rect x="74" y="0" width="3" height="10" fill="black" />
+      <rect x="79" y="0" width="1" height="10" fill="black" />
+      <rect x="82" y="0" width="2" height="10" fill="black" />
+      <rect x="86" y="0" width="1" height="10" fill="black" />
+      <rect x="89" y="0" width="3" height="10" fill="black" />
+    </g>
+  </g>
+  
+  <!-- Worker 1 -->
+  <g transform="translate(200, 300)">
+    <circle cx="15" cy="15" r="15" fill="#FFD700" /> <!-- Head -->
+    <rect x="5" y="30" width="20" height="30" fill="#FF9900" /> <!-- Body -->
+    <rect x="0" y="35" width="5" height="20" fill="#FF9900" /> <!-- Left arm -->
+    <rect x="25" y="35" width="5" height="20" fill="#FF9900" /> <!-- Right arm -->
+    <rect x="5" y="60" width="8" height="20" fill="#0066CC" /> <!-- Left leg -->
+    <rect x="17" y="60" width="8" height="20" fill="#0066CC" /> <!-- Right leg -->
+  </g>
+  
+  <!-- Worker 2 -->
+  <g transform="translate(500, 350)">
+    <circle cx="15" cy="15" r="15" fill="#FFD700" /> <!-- Head -->
+    <rect x="5" y="30" width="20" height="30" fill="#FF9900" /> <!-- Body -->
+    <rect x="0" y="35" width="5" height="20" fill="#FF9900" /> <!-- Left arm -->
+    <rect x="25" y="35" width="5" height="20" fill="#FF9900" /> <!-- Right arm -->
+    <rect x="5" y="60" width="8" height="20" fill="#0066CC" /> <!-- Left leg -->
+    <rect x="17" y="60" width="8" height="20" fill="#0066CC" /> <!-- Right leg -->
+  </g>
+  
+  <!-- Office Desks -->
+  <g transform="translate(300, 400)">
+    <!-- Desk 1 -->
+    <rect x="0" y="0" width="100" height="50" fill="#8B4513" />
+    <rect x="10" y="10" width="80" height="30" fill="#A0A0A0" /> <!-- Computer -->
+    
+    <!-- Desk 2 -->
+    <rect x="120" y="0" width="100" height="50" fill="#8B4513" />
+    <rect x="130" y="10" width="80" height="30" fill="#A0A0A0" /> <!-- Computer -->
+    
+    <!-- Desk 3 -->
+    <rect x="240" y="0" width="100" height="50" fill="#8B4513" />
+    <rect x="250" y="10" width="80" height="30" fill="#A0A0A0" /> <!-- Computer -->
+    
+    <!-- Office Workers -->
+    <g transform="translate(50, -20)">
+      <circle cx="0" cy="0" r="10" fill="#333333" /> <!-- Head -->
+      <rect x="-10" y="10" width="20" height="25" fill="#333333" /> <!-- Body -->
+    </g>
+    
+    <g transform="translate(170, -20)">
+      <circle cx="0" cy="0" r="10" fill="#333333" /> <!-- Head -->
+      <rect x="-10" y="10" width="20" height="25" fill="#333333" /> <!-- Body -->
+    </g>
+    
+    <g transform="translate(290, -20)">
+      <circle cx="0" cy="0" r="10" fill="#333333" /> <!-- Head -->
+      <rect x="-10" y="10" width="20" height="25" fill="#333333" /> <!-- Body -->
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,72 @@
+{
+    "mainMenu": [
+        {
+            "href": "/dashboard",
+            "icon": "LayoutDashboard",
+            "label": "Dashboard"
+        },
+        {
+            "href": "/items",
+            "icon": "Package",
+            "label": "Items",
+            "submenu": [
+                { "href": "/items", "label": "Items", "icon": "Package" },
+                { "href": "/items/location", "label": "Location", "icon": "MapPin" }
+            ]
+        },
+        {
+            "href": "/purchase-orders",
+            "icon": "ShoppingCart",
+            "label": "Purchase Orders",
+            "submenu": [
+                { "href": "/purchase-orders", "label": "Purchase Orders", "icon": "ShoppingCart" },
+                { "href": "/purchase-orders/transaction-receipts", "label": "PO Receipt", "icon": "ReceiptText" }
+            ]
+        },
+        {
+            "href": "/po-hex-codes",
+            "icon": "Hash",
+            "label": "PO Code"
+        },
+        {
+            "href": "/inbound/warehouse-gate",
+            "icon": "Warehouse",
+            "label": "Inbound"
+        },
+        {
+            "href": "/location-trackers",
+            "icon": "Activity",
+            "label": "Location Trackers"
+        },
+        {
+            "href": "/location-tracker-status",
+            "icon": "MapPin",
+            "label": "Location Tracker Status"
+        },
+        {
+            "href": "/self-tracker",
+            "icon": "Activity",
+            "label": "Shelf Tracker"
+        },
+        {
+            "href": "/stock",
+            "icon": "Package",
+            "label": "Stock"
+        },
+        {
+            "href": "/requisitions",
+            "icon": "ClipboardList",
+            "label": "Requisitions"
+        },
+        {
+            "href": "/packs",
+            "icon": "Package",
+            "label": "Pack Items"
+        },
+        {
+            "href": "/outbound/live",
+            "icon": "ArrowRight",
+            "label": "Outbound Live"
+        }
+    ]
+}

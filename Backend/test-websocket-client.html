@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RFID EPC Real-time Display - WebSocket Test</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-top: 0;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #4CAF50;
+            color: white;
+        }
+        tr:hover {
+            background: #f5f5f5;
+        }
+        .identified {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .unidentified {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔖 RFID EPC Real-time Display</h1>
+        
+        <div id="status" class="status disconnected">
+            Disconnected
+        </div>
+
+        <div id="table-container">
+            <table id="epc-table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>EPC</th>
+                        <th>Item Number</th>
+                        <th>Item Description</th>
+                        <th>PO Number</th>
+                        <th>Location</th>
+                        <th>Antenna</th>
+                        <th>RSSI</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="epc-tbody">
+                    <tr>
+                        <td colspan="9" class="no-data">No EPC reads yet...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Connect to WebSocket server
+        const socket = io('http://localhost:5000');
+
+        const statusDiv = document.getElementById('status');
+        const tbody = document.getElementById('epc-tbody');
+
+        let epcReads = [];
+
+        // Socket connection handlers
+        socket.on('connect', () => {
+            console.log('✅ Connected to server');
+            statusDiv.className = 'status connected';
+            statusDiv.textContent = 'Connected - Waiting for EPC data...';
+        });
+
+        socket.on('disconnect', () => {
+            console.log('❌ Disconnected from server');
+            statusDiv.className = 'status disconnected';
+            statusDiv.textContent = 'Disconnected';
+        });
+
+        // Listen for EPC read events
+        socket.on('epc:read', (data) => {
+            console.log('Received EPC read:', data);
+            
+            if (data.data) {
+                const epcData = data.data;
+                
+                // Add to array
+                epcReads.unshift(epcData);
+                
+                // Keep only last 100 reads
+                if (epcReads.length > 100) {
+                    epcReads = epcReads.slice(0, 100);
+                }
+                
+                // Update table
+                updateTable();
+            }
+        });
+
+        function updateTable() {
+            if (epcReads.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="no-data">No EPC reads yet...</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = epcReads.map(epc => {
+                const timestamp = new Date(epc.timestamp).toLocaleString();
+                const status = epc.is_identified 
+                    ? '<span class="identified">✓ Identified</span>' 
+                    : '<span class="unidentified">✗ Unidentified</span>';
+                
+                return `
+                    <tr>
+                        <td>${timestamp}</td>
+                        <td><code>${epc.epc}</code></td>
+                        <td>${epc.item_number || '-'}</td>
+                        <td>${epc.item_description || '-'}</td>
+                        <td>${epc.po_number || '-'}</td>
+                        <td>${epc.location_code || '-'}</td>
+                        <td>${epc.antenna_id}</td>
+                        <td>${epc.rssi} dBm</td>
+                        <td>${status}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Update status message
+        setInterval(() => {
+            if (epcReads.length > 0) {
+                const connectedStatus = socket.connected ? 'Connected' : 'Disconnected';
+                statusDiv.textContent = `${connectedStatus} - ${epcReads.length} EPC reads received`;
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,26 @@
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Network Background Pattern -->
+  <g opacity="0.2">
+    <path d="M0 0L800 600" stroke="white" stroke-width="0.5" />
+    <path d="M0 600L800 0" stroke="white" stroke-width="0.5" />
+    <path d="M400 0V600" stroke="white" stroke-width="0.5" />
+    <path d="M0 300H800" stroke="white" stroke-width="0.5" />
+    
+    <!-- Additional network lines -->
+    <path d="M200 0V600" stroke="white" stroke-width="0.5" />
+    <path d="M600 0V600" stroke="white" stroke-width="0.5" />
+    <path d="M0 150H800" stroke="white" stroke-width="0.5" />
+    <path d="M0 450H800" stroke="white" stroke-width="0.5" />
+    
+    <!-- Dots at intersections -->
+    <circle cx="200" cy="150" r="3" fill="white" />
+    <circle cx="200" cy="300" r="3" fill="white" />
+    <circle cx="200" cy="450" r="3" fill="white" />
+    <circle cx="400" cy="150" r="3" fill="white" />
+    <circle cx="400" cy="300" r="3" fill="white" />
+    <circle cx="400" cy="450" r="3" fill="white" />
+    <circle cx="600" cy="150" r="3" fill="white" />
+    <circle cx="600" cy="300" r="3" fill="white" />
+    <circle cx="600" cy="450" r="3" fill="white" />
+  </g>
+</svg>
