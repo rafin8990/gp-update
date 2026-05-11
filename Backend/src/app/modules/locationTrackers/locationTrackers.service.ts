@@ -213,9 +213,25 @@ const getCurrentStatus = async (): Promise<ILocationStatusRow[]> => {
   }));
 };
 
+const MAX_BULK_DELETE = 200;
+
+/** Deletes inbound scan rows (movement log). Unknown ids are ignored. */
+const deleteInboundScansByIds = async (ids: number[]): Promise<{ deleted: number }> => {
+  const unique = [...new Set(ids.map((n) => Number(n)))].filter(
+    (n) => Number.isInteger(n) && n > 0,
+  );
+  if (!unique.length) {
+    return { deleted: 0 };
+  }
+  const capped = unique.slice(0, MAX_BULK_DELETE);
+  const r = await pool.query(`DELETE FROM inbound_scans WHERE id = ANY($1::bigint[])`, [capped]);
+  return { deleted: r.rowCount ?? 0 };
+};
+
 export const LocationTrackersService = {
   listFromInboundScans,
   listByLocationCode,
   getStats,
   getCurrentStatus,
+  deleteInboundScansByIds,
 };

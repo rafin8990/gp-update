@@ -116,4 +116,25 @@ export const poTransactionReceiptsApi = {
   delete: async (id: number): Promise<void> => {
     await axiosInstance.delete(`/po-transaction-receipts/${id}`);
   },
+
+  /** Downloads filled Oracle .xlsm for the given receipt id (blob). */
+  downloadOracleExport: async (receiptId: number): Promise<void> => {
+    const response = await axiosInstance.get<Blob>(`/po-transaction-receipts/${receiptId}/oracle-export`, {
+      responseType: 'blob',
+    });
+    const disposition = response.headers['content-disposition'] as string | undefined;
+    let filename = `oracle-rcv-${receiptId}.xlsm`;
+    if (disposition) {
+      const m = /filename="([^"]+)"/.exec(disposition) || /filename=([^;]+)/.exec(disposition);
+      if (m) filename = m[1].trim().replace(/^"|"$/g, '');
+    }
+    const url = window.URL.createObjectURL(response.data);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  },
 };

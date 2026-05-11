@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { PageLayout } from '@/components/layout/page-layout'
 import { PageHeader } from '@/components/layout/page-header'
 import { requisitionsApi, UpdateRequisitionData, IRequisitionItem } from '@/lib/api/requisitions'
-import { itemsApi, IItem } from '@/lib/api/items'
+import { itemsApi, IItem, getErpItemNumber, getErpItemDisplayLabel } from '@/lib/api/items'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 export default function EditRequisitionPage() {
@@ -18,9 +18,13 @@ export default function EditRequisitionPage() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [form, setForm] = useState<UpdateRequisitionData>({})
-  const [items, setItems] = useState<Array<
-    Omit<IRequisitionItem, 'id' | 'requisition_id'> & { quantity: number | string }
-  >>([])
+  const [items, setItems] = useState<
+    Array<
+      Omit<IRequisitionItem, 'id' | 'requisition_id' | 'item_description'> & {
+        quantity: number | string
+      }
+    >
+  >([])
   const [availableItems, setAvailableItems] = useState<IItem[]>([])
 
   useEffect(() => {
@@ -31,13 +35,27 @@ export default function EditRequisitionPage() {
         const data = await requisitionsApi.getById(Number(params.id))
         setForm({
           requisition_number: data.requisition_number,
+          source_order: data.source_order ?? '',
           distribution_partner_name: data.distribution_partner_name,
           address: data.address,
           organization_code: data.organization_code,
           description: data.description ?? null,
           status: data.status,
+          transport_type_1: data.transport_type_1 ?? '',
+          transport_type_2: data.transport_type_2 ?? '',
+          vehicle_1: data.vehicle_1 ?? '',
+          vehicle_2: data.vehicle_2 ?? '',
         })
-        setItems((data.items || []).map(i => ({ item_number: i.item_number, quantity: i.quantity ?? '', uom: i.uom })))
+        setItems(
+          (data.items || []).map((i) => ({
+            item_number: i.item_number,
+            quantity: i.quantity ?? '',
+            uom: i.uom ?? '',
+            item_type: i.item_type ?? '',
+            source_subinventory: i.source_subinventory ?? '',
+            source_location_code: i.source_location_code ?? '',
+          })),
+        )
       } finally {
         setLoading(false)
       }
@@ -56,17 +74,16 @@ export default function EditRequisitionPage() {
   const dropdownOptions = useMemo(() => {
     const opts: Array<{ key: string; label: string; item: IItem }> = []
     for (const it of availableItems) {
-      const key = it.item_number
-      const label = `${it.item_number} (${it.item_description || 'N/A'})`
-      opts.push({ key, label, item: it })
+      const key = getErpItemNumber(it)
+      opts.push({ key, label: getErpItemDisplayLabel(it), item: it })
     }
     return opts
   }, [availableItems])
 
   const setItem = (
     idx: number,
-    key: keyof Omit<IRequisitionItem, 'id' | 'requisition_id'>,
-    value: any
+    key: keyof Omit<IRequisitionItem, 'id' | 'requisition_id' | 'item_description'>,
+    value: any,
   ) => {
     setItems(prev => {
       const copy = [...prev]
@@ -75,7 +92,18 @@ export default function EditRequisitionPage() {
     })
   }
 
-  const addRow = () => setItems(prev => [...prev, { item_number: '', epc: '', quantity: 1, uom: '' }])
+  const addRow = () =>
+    setItems((prev) => [
+      ...prev,
+      {
+        item_number: '',
+        quantity: 1,
+        uom: '',
+        item_type: '',
+        source_subinventory: '',
+        source_location_code: '',
+      },
+    ])
   const removeRow = (idx: number) => setItems(prev => prev.filter((_, i) => i !== idx))
 
   const onSubmit = async () => {
@@ -84,10 +112,18 @@ export default function EditRequisitionPage() {
     try {
       const payload: UpdateRequisitionData = {
         ...form,
-        items: items.map(it => ({
+        source_order: form.source_order === '' ? null : form.source_order,
+        transport_type_1: form.transport_type_1 === '' ? null : form.transport_type_1,
+        transport_type_2: form.transport_type_2 === '' ? null : form.transport_type_2,
+        vehicle_1: form.vehicle_1 === '' ? null : form.vehicle_1,
+        vehicle_2: form.vehicle_2 === '' ? null : form.vehicle_2,
+        items: items.map((it) => ({
           item_number: it.item_number,
           uom: it.uom,
           quantity: Math.max(1, Number(it.quantity) || 0),
+          ...(it.item_type ? { item_type: String(it.item_type) } : {}),
+          ...(it.source_subinventory ? { source_subinventory: String(it.source_subinventory) } : {}),
+          ...(it.source_location_code ? { source_location_code: String(it.source_location_code) } : {}),
         })),
       }
       await requisitionsApi.update(Number(params.id), payload)
@@ -129,6 +165,30 @@ export default function EditRequisitionPage() {
               <Input value={form.organization_code || ''} onChange={(e) => setForm({ ...form, organization_code: e.target.value })} />
             </div>
             <div className="space-y-2">
+              <Label>Source order</Label>
+              <Input
+                value={form.source_order ?? ''}
+                onChange={(e) => setForm({ ...form, source_order: e.target.value })}
+                placeholder="Optional"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Transport type 1</Label>
+              <Input value={form.transport_type_1 ?? ''} onChange={(e) => setForm({ ...form, transport_type_1: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Transport type 2</Label>
+              <Input value={form.transport_type_2 ?? ''} onChange={(e) => setForm({ ...form, transport_type_2: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Vehicle 1</Label>
+              <Input value={form.vehicle_1 ?? ''} onChange={(e) => setForm({ ...form, vehicle_1: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Vehicle 2</Label>
+              <Input value={form.vehicle_2 ?? ''} onChange={(e) => setForm({ ...form, vehicle_2: e.target.value })} />
+            </div>
+            <div className="space-y-2 md:col-span-2">
               <Label>Description</Label>
               <Textarea value={form.description ?? ''} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} />
             </div>
@@ -147,10 +207,23 @@ export default function EditRequisitionPage() {
                     <Select
                       value={it.item_number || ''}
                       onValueChange={(val) => {
-                        const found = dropdownOptions.find(o => o.key === val)
-                        if (found) {
-                          setItem(idx, 'item_number', found.item.item_number)
-                        }
+                        const found = dropdownOptions.find((o) => o.key === val)
+                        if (!found) return
+                        const num = getErpItemNumber(found.item)
+                        const uomFromMaster = (found.item.primary_uom_code ?? '').trim()
+                        setItems((prev) => {
+                          const copy = [...prev]
+                          const cur = copy[idx]
+                          if (!cur) return prev
+                          copy[idx] = {
+                            ...cur,
+                            item_number: num,
+                            ...(uomFromMaster && !String(cur.uom ?? '').trim()
+                              ? { uom: uomFromMaster }
+                              : {}),
+                          }
+                          return copy
+                        })
                       }}
                     >
                       <SelectTrigger>

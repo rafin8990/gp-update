@@ -9,6 +9,10 @@ import { PoCodeRoutes } from '../modules/poCodes/poCode.routes';
 import { PoTransactionReceiptRoutes } from '../modules/poTransactionReceipts/poTransactionReceipt.routes';
 import { StockRoutes } from '../modules/stock/stock.routes';
 import { LocationTrackersRoutes } from '../modules/locationTrackers/locationTrackers.routes';
+import { RequisitionRoutes } from '../modules/requisitions/requisition.routes';
+import { PickSlipRoutes } from '../modules/pickSlips/pickSlip.routes';
+import { PackRoutes } from '../modules/packs/pack.routes';
+import { OutboundRoutes } from '../modules/outbound/outbound.routes';
 
 const router = express.Router();
 
@@ -52,6 +56,22 @@ const moduleRoutes = [
   {
     path: '/location-trackers',
     routes: LocationTrackersRoutes,
+  },
+  {
+    path: '/requisitions',
+    routes: RequisitionRoutes,
+  },
+  {
+    path: '/pick-slips',
+    routes: PickSlipRoutes,
+  },
+  {
+    path: '/packs',
+    routes: PackRoutes,
+  },
+  {
+    path: '/outbound',
+    routes: OutboundRoutes,
   },
 ];
 

@@ -8,6 +8,7 @@ import {
   IPoTransactionReceipt,
   IUpdatePoTransactionReceiptWithLotsRequest,
 } from './poTransactionReceipt.interface';
+import { buildOracleExportBuffer } from './oraclePoExport';
 
 type IReceiptWithLotsResponse = {
   receipt: IPoTransactionReceipt;
@@ -446,6 +447,20 @@ const deleteLot = async (id: number): Promise<void> => {
   await pool.query('DELETE FROM po_lot_details WHERE id = $1', [id]);
 };
 
+/** Oracle interface workbook for one receipt (MVP: PO page picks latest receipt by created_at). */
+const generateOracleExport = async (
+  id: number,
+): Promise<{ buffer: Buffer; filename: string }> => {
+  const { receipt, lots } = await getReceiptById(id);
+  if (!receipt) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'PO transaction receipt not found');
+  }
+  const buffer = await buildOracleExportBuffer(receipt, lots);
+  const safeLine = (receipt.interface_line_number || String(id)).replace(/[^a-zA-Z0-9._-]/g, '_');
+  const filename = `oracle-rcv-${safeLine}.xlsm`;
+  return { buffer, filename };
+};
+
 export const PoTransactionReceiptService = {
   createReceiptWithLots,
   createReceipt,
@@ -458,4 +473,5 @@ export const PoTransactionReceiptService = {
   listReceipts,
   deleteReceipt,
   deleteLot,
+  generateOracleExport,
 };

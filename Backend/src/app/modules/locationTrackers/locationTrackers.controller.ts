@@ -71,9 +71,24 @@ const byLocation = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
+const bulkDelete = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const ids = req.body.ids as number[];
+    const { deleted } = await LocationTrackersService.deleteInboundScansByIds(ids);
+    res.status(httpStatus.OK).json({
+      success: true,
+      message: deleted === 0 ? 'No matching rows were deleted' : `Deleted ${deleted} movement(s)`,
+      data: { deleted },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const LocationTrackersController = {
   list,
   stats,
   currentStatus,
   byLocation,
+  bulkDelete,
 };

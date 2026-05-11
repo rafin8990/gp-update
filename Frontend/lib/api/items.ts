@@ -168,6 +168,17 @@ export interface ItemsListResponse {
   };
 }
 
+/** ERP master row uses `item` (number) + `description`, not `item_number` / `item_description`. */
+export function getErpItemNumber(row: IItem): string {
+  return String(row.item);
+}
+
+export function getErpItemDisplayLabel(row: IItem): string {
+  const n = getErpItemNumber(row);
+  const d = row.description?.trim() || 'N/A';
+  return `${n} (${d})`;
+}
+
 export const itemsApi = {
   // Get all items with pagination and filtering
   getAll: async (params: ItemQueryParams = {}): Promise<ItemsListResponse> => {

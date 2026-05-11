@@ -135,6 +135,14 @@ const deleteLot = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const downloadOracleExport = catchAsync(async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  const { buffer, filename } = await PoTransactionReceiptService.generateOracleExport(id);
+  res.setHeader('Content-Type', 'application/vnd.ms-excel.sheet.macroEnabled.12');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.send(buffer);
+});
+
 export const PoTransactionReceiptController = {
   createWithLots,
   createReceipt,
@@ -147,4 +155,5 @@ export const PoTransactionReceiptController = {
   listReceipts,
   deleteReceipt,
   deleteLot,
+  downloadOracleExport,
 };

@@ -17,7 +17,14 @@ const getStockByTripleSchema = z.object({
   }),
 });
 
+const listInboundScansByPoSchema = z.object({
+  params: z.object({
+    po_number: z.string().min(1, 'PO number is required'),
+  }),
+});
+
 export const StockValidation = {
   listStockQuerySchema,
   getStockByTripleSchema,
+  listInboundScansByPoSchema,
 };

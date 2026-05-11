@@ -143,6 +143,7 @@ export default function RequisitionsPage() {
             <SelectItem value="pending">Pending</SelectItem>
             <SelectItem value="complete">Complete</SelectItem>
             <SelectItem value="cancel">Cancel</SelectItem>
+            <SelectItem value="received">Received</SelectItem>
           </SelectContent>
         </Select>
         <Button onClick={resetFilters} disabled={loading}>Reset</Button>

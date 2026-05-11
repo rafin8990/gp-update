@@ -1,17 +1,19 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
+import Link from 'next/link';
 import { PageLayout } from '@/components/layout/page-layout';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Pagination } from '@/components/ui/pagination';
-import { Search, RefreshCw, Package, TrendingUp, Hash, Building2, Activity, MapPin, Clock, User, Zap } from 'lucide-react';
+import { Search, RefreshCw, Package, TrendingUp, Hash, Building2, Activity, Zap, Radio } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { stockApi, IStock, IStockFilters, IStockStats, IStockSummary } from '@/lib/api/stock';
+import { stockApi, IStock, IStockFilters, IStockStats } from '@/lib/api/stock';
+import { stockPoLotItemPath, stockPoLotPath } from '@/lib/stockPaths';
 import { io } from 'socket.io-client';
 
 export default function StockPage() {
@@ -32,7 +34,6 @@ export default function StockPage() {
   const [filteredStocks, setFilteredStocks] = useState<IStock[]>([]);
   const [liveUpdates, setLiveUpdates] = useState<{[key: string]: any}>({});
   const [nextFifoLot, setNextFifoLot] = useState<{[key: string]: string}>({});
-  const [locationUpdates, setLocationUpdates] = useState<{[key: string]: any}>({});
   const { toast } = useToast();
 
   // Fetch stocks
@@ -159,20 +160,8 @@ export default function StockPage() {
       fetchStats();
     });
 
-    // Listen for location tracker updates
-    socket.on('location_tracker_updated', (data: any) => {
-      console.log('📍 Live location update received:', data);
-      
-      // Update location data for specific item
-      setLocationUpdates(prev => ({
-        ...prev,
-        [data.item_number]: {
-          ...data,
-          timestamp: Date.now()
-        }
-      }));
-      
-      // Refresh stock data to get updated location info
+    // Listen for location tracker updates (refresh quantities / stock rows)
+    socket.on('location_tracker_updated', () => {
       fetchStocks();
     });
 
@@ -253,24 +242,6 @@ export default function StockPage() {
     }
   }, [filteredStocks]);
 
-  // Auto-clear location updates after 10 seconds
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setLocationUpdates(prev => {
-        const now = Date.now();
-        const updated = { ...prev };
-        Object.keys(updated).forEach(key => {
-          if (now - updated[key].timestamp > 10000) { // 10 seconds
-            delete updated[key];
-          }
-        });
-        return updated;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
-
   // Get paginated grouped stock items
   const getPaginatedGroupedItems = () => {
     const grouped = getGroupedStockItems();
@@ -327,29 +298,6 @@ export default function StockPage() {
     const startIndex = (pagination.page - 1) * pagination.limit;
     const endIndex = startIndex + pagination.limit;
     return allItems.slice(startIndex, endIndex);
-  };
-
-  const formatTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    // Convert to Bangladesh time (UTC+6)
-    const bangladeshTime = new Date(date.getTime() + (6 * 60 * 60 * 1000));
-    return bangladeshTime.toLocaleTimeString('en-US', { 
-      hour12: false,
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-  };
-
-  const formatDate = (timestamp: string) => {
-    const date = new Date(timestamp);
-    // Convert to Bangladesh time (UTC+6)
-    const bangladeshTime = new Date(date.getTime() + (6 * 60 * 60 * 1000));
-    return bangladeshTime.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
   };
 
   return (
@@ -483,42 +431,47 @@ export default function StockPage() {
                       getPaginatedGroupedItems().map((row, index) => {
                         if (row.type === 'po-lot-header') {
                           return (
-                            <>
-                              <TableRow key={`po-lot-${row.poNumber}-${row.lotNumber}`} className={`border-b-2 py-4 px-4 ${
+                            <Fragment key={`po-lot-block-${row.poNumber}-${row.lotNumber}`}>
+                              <TableRow className={`border-b-2 py-4 px-4 ${
                                 row.hasStock && row.outOfStock ? 'bg-green-50 border-green-200' :
                                 row.hasStock ? 'bg-green-100 border-green-300' :
                                 'bg-red-100 border-red-300'
                               }`}>
-                                <TableCell colSpan={6} className="font-bold text-gray-800 text-lg py-4 px-4">
-                                  <div className="flex items-center gap-3">
-                                    <span>📦 {row.poNumber} (Lot: {row.lotNumber})</span>
-                                    {row.hasStock && row.outOfStock && (
-                                      <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
-                                        PARTIAL STOCK
-                                      </span>
-                                    )}
-                                    {row.hasStock && !row.outOfStock && (
-                                      <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full">
-                                        IN STOCK
-                                      </span>
-                                    )}
-                                    {!row.hasStock && row.outOfStock && (
-                                      <span className="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full">
-                                        OUT OF STOCK
-                                      </span>
-                                    )}
+                                <TableCell colSpan={4} className="font-bold text-gray-800 text-lg py-4 px-4">
+                                  <div className="flex flex-wrap items-center justify-between gap-3">
+                                    <div className="flex items-center gap-3">
+                                      <span>📦 {row.poNumber} (Lot: {row.lotNumber})</span>
+                                      {row.hasStock && row.outOfStock && (
+                                        <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                                          PARTIAL STOCK
+                                        </span>
+                                      )}
+                                      {row.hasStock && !row.outOfStock && (
+                                        <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full">
+                                          IN STOCK
+                                        </span>
+                                      )}
+                                      {!row.hasStock && row.outOfStock && (
+                                        <span className="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full">
+                                          OUT OF STOCK
+                                        </span>
+                                      )}
+                                    </div>
+                                    <Button variant="secondary" size="sm" asChild className="font-normal">
+                                      <Link href={stockPoLotPath(row.poNumber, row.lotNumber)}>
+                                        Lot details
+                                      </Link>
+                                    </Button>
                                   </div>
                                 </TableCell>
                               </TableRow>
-                              <TableRow key={`headers-${row.poNumber}-${row.lotNumber}`} className="bg-blue-50 border-b border-gray-200">
+                              <TableRow className="bg-blue-50 border-b border-gray-200">
                                 <TableHead className="text-blue-800 font-semibold py-2 px-4">Item ID</TableHead>
                                 <TableHead className="text-blue-800 font-semibold py-2 px-4">Item Description</TableHead>
                                 <TableHead className="text-blue-800 font-semibold py-2 px-4 text-right">Quantity</TableHead>
-                                <TableHead className="text-blue-800 font-semibold py-2 px-4">Last Location</TableHead>
-                                <TableHead className="text-blue-800 font-semibold py-2 px-4">Created At</TableHead>
-                                <TableHead className="text-blue-800 font-semibold py-2 px-4">Updated At</TableHead>
+                                <TableHead className="text-blue-800 font-semibold py-2 px-4 w-[140px]">RFID / serial</TableHead>
                               </TableRow>
-                            </>
+                            </Fragment>
                           );
                         }
                         
@@ -526,7 +479,6 @@ export default function StockPage() {
                         const itemKey = `${row.po_number}-${row.lot_no}`;
                         const isNextFifo = nextFifoLot[itemKey] === row.lot_no;
                         const hasLiveUpdate = liveUpdates[row.item_number];
-                        const hasLocationUpdate = locationUpdates[row.item_number];
                         const isOutOfStock = row.quantity === 0;
                         
                         return (
@@ -587,62 +539,19 @@ export default function StockPage() {
                               </div>
                           </TableCell>
                             <TableCell className="py-3 px-4">
-                              {row.last_location_status ? (
-                                <div className="flex items-center gap-2">
-                                  <div className={`w-3 h-3 rounded-full ${
-                                    row.last_location_status === 'in' ? 'bg-green-500' : 'bg-red-500'
-                                  }`}></div>
-                                  <div className="text-sm">
-                                    <div className={`font-medium ${
-                                      row.last_location_status === 'in' ? 'text-green-700' : 'text-red-700'
-                                    }`}>
-                                      {row.last_location_status === 'in' ? 'IN' : 'OUT'}
-                                    </div>
-                                    {row.last_location_name && (
-                                      <div className="text-xs text-gray-500 flex items-center gap-1">
-                                        <MapPin className="h-3 w-3" />
-                                        {row.last_location_name}
-                                      </div>
-                                    )}
-                                    {row.last_location_time && (
-                                      <div className="text-xs text-gray-500 flex items-center gap-1">
-                                        <Clock className="h-3 w-3" />
-                                        {formatTime(row.last_location_time)}
-                                      </div>
-                                    )}
-                                    {hasLocationUpdate && (
-                                      <div className="text-xs text-blue-600 flex items-center gap-1 mt-1">
-                                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                                        <span>Updated {Math.floor((Date.now() - hasLocationUpdate.timestamp) / 1000)}s ago</span>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              ) : (
-                                <div className="text-sm text-gray-400 flex items-center gap-1">
-                                  <MapPin className="h-4 w-4" />
-                                  No location data
-                                </div>
-                              )}
-                          </TableCell>
-                            <TableCell className="py-3 px-4">
-                            <div className="text-sm">
-                                <p className="font-medium text-gray-800">{formatTime(row.created_at)}</p>
-                                <p className="text-xs text-gray-500">{formatDate(row.created_at)}</p>
-                            </div>
-                          </TableCell>
-                            <TableCell className="py-3 px-4">
-                            <div className="text-sm">
-                                <p className="font-medium text-gray-800">{formatTime(row.updated_at)}</p>
-                                <p className="text-xs text-gray-500">{formatDate(row.updated_at)}</p>
-                            </div>
-                          </TableCell>
+                              <Button variant="outline" size="sm" asChild className="whitespace-nowrap">
+                                <Link href={stockPoLotItemPath(row.po_number, row.lot_no, row.item_number)}>
+                                  <Radio className="h-3.5 w-3.5 mr-1.5" />
+                                  Details
+                                </Link>
+                              </Button>
+                            </TableCell>
                         </TableRow>
                         );
                       })
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                        <TableCell colSpan={4} className="text-center py-8 text-gray-500">
                           <div className="flex flex-col items-center gap-2">
                             <Package className="h-8 w-8 text-gray-400" />
                             <p>No stock data available</p>

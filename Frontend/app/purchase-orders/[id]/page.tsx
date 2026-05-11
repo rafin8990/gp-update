@@ -24,7 +24,8 @@ import {
   CheckCircle2,
   XCircle,
   Info,
-  Tag
+  Tag,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -50,6 +51,7 @@ export default function PurchaseOrderViewPage() {
   const [lotReceiveSummary, setLotReceiveSummary] = useState<IPoLotReceiveSummaryRow[]>([]);
   const [approvingKey, setApprovingKey] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [oracleExporting, setOracleExporting] = useState(false);
 
   useEffect(() => {
     if (params.id) {
@@ -103,6 +105,31 @@ export default function PurchaseOrderViewPage() {
       });
     } finally {
       setDeleteLoading(false);
+    }
+  };
+
+  const handleOracleExport = async () => {
+    try {
+      setOracleExporting(true);
+      const templatePath = '/PO-receive-templete/po-receive-details.xlsm';
+      const a = document.createElement('a');
+      a.href = templatePath;
+      a.download = 'po-receive-details.xlsm';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      toast({
+        title: 'Success',
+        description: 'Oracle template downloaded.',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error?.message || 'Failed to download Oracle template',
+        variant: 'destructive',
+      });
+    } finally {
+      setOracleExporting(false);
     }
   };
 
@@ -240,6 +267,9 @@ export default function PurchaseOrderViewPage() {
   const totalLineAmount = lines.reduce((sum, line) => sum + parseFloat(line.line_amount || '0'), 0);
   const totalTaxAmount = lines.reduce((sum, line) => sum + parseFloat(line.tax_amount || '0'), 0);
   const totalAmount = lines.reduce((sum, line) => sum + parseFloat(line.total_amount || '0'), 0);
+  const hasReceivableLotQuantity = lotReceiveSummary.some(
+    row => Number(row.allocated_scanned_quantity) > 0,
+  );
 
   return (
     <PageLayout activePage="purchase-orders">
@@ -264,6 +294,16 @@ export default function PurchaseOrderViewPage() {
           </Button>
           
           <div className="flex gap-2">
+            {hasReceivableLotQuantity && (
+              <Button
+                variant="outline"
+                onClick={handleOracleExport}
+                disabled={oracleExporting}
+              >
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                {oracleExporting ? 'Generating...' : 'Generate Excel for Oracle'}
+              </Button>
+            )}
             <Button
               variant="outline"
               onClick={() => router.push(`/purchase-orders/${po.po_header_id}/edit`)}

@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { requisitionsApi, IRequisitionWithItems } from '@/lib/api/requisitions'
+import { pickSlipsApi } from '@/lib/api/packs'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 
@@ -18,33 +19,24 @@ export default function RequisitionViewPage() {
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<IRequisitionWithItems | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
-  const [receivedQuantities, setReceivedQuantities] = useState<{[itemNumber: string]: number}>({})
+  /** EPC count per item from all pick slips for this requisition (1 RFID ≈ 1 unit). */
+  const [pickedEpcCounts, setPickedEpcCounts] = useState<Record<string, number>>({})
   const [pdfLoading, setPdfLoading] = useState(false)
 
-  // Fetch received quantities from outbound table
-  const fetchReceivedQuantities = async (requisitionId: number) => {
+  const loadPickedCountsFromPickSlips = async (requisitionId: number) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/outbound?requisition_id=${requisitionId}`)
-      const result = await response.json()
-      
-      if (result.success && result.data) {
-        const quantities: {[itemNumber: string]: number} = {}
-        
-        result.data.forEach((outbound: any) => {
-          const items = Array.isArray(outbound.items) ? outbound.items : JSON.parse(outbound.items)
-          items.forEach((item: any) => {
-            if (quantities[item.item_number]) {
-              quantities[item.item_number] += item.quantity || 0
-            } else {
-              quantities[item.item_number] = item.quantity || 0
-            }
-          })
-        })
-        
-        setReceivedQuantities(quantities)
+      const res = await pickSlipsApi.getAll({ requisition_id: requisitionId, page: 1, limit: 1000 })
+      const counts: Record<string, number> = {}
+      for (const slip of res.data || []) {
+        for (const it of slip.items || []) {
+          const k = String(it.item_number)
+          counts[k] = (counts[k] || 0) + 1
+        }
       }
+      setPickedEpcCounts(counts)
     } catch (error) {
-      console.error('Failed to fetch received quantities:', error)
+      console.error('Failed to load pick slips for requisition:', error)
+      setPickedEpcCounts({})
     }
   }
 
@@ -55,8 +47,7 @@ export default function RequisitionViewPage() {
       try {
         const res = await requisitionsApi.getById(Number(params.id))
         setData(res)
-        // Fetch received quantities
-        await fetchReceivedQuantities(Number(params.id))
+        await loadPickedCountsFromPickSlips(Number(params.id))
       } finally {
         setLoading(false)
       }
@@ -86,12 +77,12 @@ export default function RequisitionViewPage() {
       
       // Generate HTML content
       const totalRequested = data.items.reduce((sum, item) => sum + item.quantity, 0)
-      const totalReceived = Object.values(receivedQuantities).reduce((sum, qty) => sum + qty, 0)
+      const totalPicked = Object.values(pickedEpcCounts).reduce((sum, qty) => sum + qty, 0)
       const overallProgress = data.items.length > 0 ? 
         Math.round(
           data.items.reduce((sum, item) => {
-            const receivedQty = receivedQuantities[item.item_number] || 0
-            return sum + (receivedQty / item.quantity) * 100
+            const picked = pickedEpcCounts[item.item_number] || 0
+            return sum + (picked / item.quantity) * 100
           }, 0) / data.items.length
         ) : 0
 
@@ -105,6 +96,7 @@ export default function RequisitionViewPage() {
           <div style="margin-bottom: 5px;"><strong>Status:</strong> ${data.status.toUpperCase()}</div>
           <div style="margin-bottom: 5px;"><strong>Created:</strong> ${formatDate(data.created_at)}</div>
           <div style="margin-bottom: 5px;"><strong>Description:</strong> ${data.description || 'N/A'}</div>
+          ${data.source_order ? `<div style="margin-bottom: 5px;"><strong>Source order:</strong> ${data.source_order}</div>` : ''}
         </div>
 
         <div style="display: flex; justify-content: space-around; margin: 20px 0; padding: 15px; background-color: #f9fafb; border-radius: 8px;">
@@ -113,8 +105,8 @@ export default function RequisitionViewPage() {
             <div style="font-size: 10px; color: #6b7280;">Total Requested</div>
           </div>
           <div style="text-align: center;">
-            <div style="font-size: 18px; font-weight: bold; color: #10b981; margin-bottom: 5px;">${totalReceived.toLocaleString()}</div>
-            <div style="font-size: 10px; color: #6b7280;">Total Received</div>
+            <div style="font-size: 18px; font-weight: bold; color: #10b981; margin-bottom: 5px;">${totalPicked.toLocaleString()}</div>
+            <div style="font-size: 10px; color: #6b7280;">Total picked (RFID)</div>
           </div>
           <div style="text-align: center;">
             <div style="font-size: 18px; font-weight: bold; color: #8b5cf6; margin-bottom: 5px;">${overallProgress}%</div>
@@ -128,7 +120,7 @@ export default function RequisitionViewPage() {
               <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Item Number</th>
               <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Description</th>
               <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Requested</th>
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Received</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Picked (RFID)</th>
               <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">UOM</th>
               <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Progress</th>
               <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Status</th>
@@ -136,9 +128,9 @@ export default function RequisitionViewPage() {
           </thead>
           <tbody>
             ${data.items.map((item, index) => {
-              const receivedQty = receivedQuantities[item.item_number] || 0
-              const progress = item.quantity > 0 ? Math.round((receivedQty / item.quantity) * 100) : 0
-              const status = receivedQty >= item.quantity ? 'Complete' : 'In Progress'
+              const pickedQty = pickedEpcCounts[item.item_number] || 0
+              const progress = item.quantity > 0 ? Math.round((pickedQty / item.quantity) * 100) : 0
+              const status = pickedQty >= item.quantity ? 'Complete' : 'In Progress'
               const rowColor = index % 2 === 0 ? '#f9fafb' : 'white'
               
               return `
@@ -146,7 +138,7 @@ export default function RequisitionViewPage() {
                   <td style="border: 1px solid #ddd; padding: 8px;">${item.item_number}</td>
                   <td style="border: 1px solid #ddd; padding: 8px;">${item.item_description || 'N/A'}</td>
                   <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${item.quantity.toLocaleString()}</td>
-                  <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${receivedQty.toLocaleString()}</td>
+                  <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${pickedQty.toLocaleString()}</td>
                   <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${item.uom}</td>
                   <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${progress}%</td>
                   <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${status}</td>
@@ -341,6 +333,26 @@ export default function RequisitionViewPage() {
               <div className="text-sm text-gray-500">Organization Code</div>
               <div className="font-medium">{data.organization_code}</div>
             </div>
+            {data.source_order != null && data.source_order !== '' && (
+              <div>
+                <div className="text-sm text-gray-500">Source order</div>
+                <div className="font-medium">{data.source_order}</div>
+              </div>
+            )}
+            {(data.transport_type_1 || data.transport_type_2 || data.vehicle_1 || data.vehicle_2) && (
+              <div className="md:col-span-2">
+                <div className="text-sm text-gray-500">Transport</div>
+                <div className="font-medium text-sm">
+                  {[data.transport_type_1, data.transport_type_2].filter(Boolean).join(' · ') || '—'}
+                  {(data.vehicle_1 || data.vehicle_2) && (
+                    <span className="text-gray-600">
+                      {' '}
+                      · {[data.vehicle_1, data.vehicle_2].filter(Boolean).join(' · ')}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
             <div className="md:col-span-2">
               <div className="text-sm text-gray-500">Address</div>
               <div className="font-medium">{data.address}</div>
@@ -366,16 +378,16 @@ export default function RequisitionViewPage() {
                 </div>
                 <div className="text-center p-4 bg-green-50 rounded-lg">
                   <div className="text-2xl font-bold text-green-600">
-                    {Object.values(receivedQuantities).reduce((sum, qty) => sum + qty, 0).toLocaleString()}
+                    {Object.values(pickedEpcCounts).reduce((sum, qty) => sum + qty, 0).toLocaleString()}
                   </div>
-                  <div className="text-sm text-green-600">Total Received</div>
+                  <div className="text-sm text-green-600">Total picked (RFID)</div>
                 </div>
                 <div className="text-center p-4 bg-purple-50 rounded-lg">
                   <div className="text-2xl font-bold text-purple-600">
                     {data.items.length > 0 ? 
                       Math.round(
                         data.items.reduce((sum, item) => {
-                          const receivedQty = receivedQuantities[item.item_number] || 0
+                          const receivedQty = pickedEpcCounts[item.item_number] || 0
                           return sum + (receivedQty / item.quantity) * 100
                         }, 0) / data.items.length
                       ) : 0
@@ -395,7 +407,7 @@ export default function RequisitionViewPage() {
                   <TableHead>Item Number</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead>Requested Qty</TableHead>
-                  <TableHead>Received Qty</TableHead>
+                  <TableHead>Picked (RFID)</TableHead>
                   <TableHead>UOM</TableHead>
                   <TableHead>Progress</TableHead>
                 </TableRow>
@@ -403,7 +415,7 @@ export default function RequisitionViewPage() {
               <TableBody>
                 {data.items && data.items.length > 0 ? (
                   data.items.map((it) => {
-                    const receivedQty = receivedQuantities[it.item_number] || 0
+                    const receivedQty = pickedEpcCounts[it.item_number] || 0
                     const progress = it.quantity > 0 ? (receivedQty / it.quantity) * 100 : 0
                     const isComplete = receivedQty >= it.quantity
                     

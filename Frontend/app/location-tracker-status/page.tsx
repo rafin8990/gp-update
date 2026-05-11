@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { PageLayout } from "@/components/layout/page-layout";
 import { PageHeader } from "@/components/layout/page-header";
@@ -25,7 +25,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Pagination } from "@/components/ui/pagination";
-import { MapPin, Search, RefreshCw, ArrowRight, ArrowLeft, ListTree, FileDown } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { MapPin, Search, RefreshCw, ArrowRight, ArrowLeft, ListTree, FileDown, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   locationTrackersApi,
@@ -154,6 +164,14 @@ export default function LocationTrackerStatusPage() {
     hasPrev: false,
   });
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set());
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [listVersion, setListVersion] = useState(0);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [query.page, query.limit, committed]);
 
   useEffect(() => {
     let cancelled = false;
@@ -181,7 +199,7 @@ export default function LocationTrackerStatusPage() {
     return () => {
       cancelled = true;
     };
-  }, [query.page, query.limit, query.sortOrder, query.sortBy, committed, toast]);
+  }, [query.page, query.limit, query.sortOrder, query.sortBy, committed, toast, listVersion]);
 
   const applyFilters = () => {
     setCommitted({ ...form });
@@ -266,6 +284,81 @@ export default function LocationTrackerStatusPage() {
       });
     } finally {
       setPdfLoading(false);
+    }
+  };
+
+  const pageIds = useMemo(() => rows.map(r => r.id), [rows]);
+  const selectedOnPageCount = useMemo(
+    () => pageIds.filter(id => selectedIds.has(id)).length,
+    [pageIds, selectedIds],
+  );
+  const allPageSelected = pageIds.length > 0 && selectedOnPageCount === pageIds.length;
+  const somePageSelected = selectedOnPageCount > 0 && !allPageSelected;
+
+  const setPageSelection = (select: boolean) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (select) {
+        for (const id of pageIds) next.add(id);
+      } else {
+        for (const id of pageIds) next.delete(id);
+      }
+      return next;
+    });
+  };
+
+  /** Radix: click from indeterminate fires `false`, but UX is “select all on page”. */
+  const onHeaderSelectAllChange = (value: boolean | "indeterminate") => {
+    if (value === true) {
+      setPageSelection(true);
+      return;
+    }
+    if (allPageSelected) {
+      setPageSelection(false);
+    } else {
+      setPageSelection(true);
+    }
+  };
+
+  const toggleRowSelected = (id: number, checked: boolean) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    const MAX_BATCH = 200;
+    const all = [...selectedIds];
+    if (all.length === 0) return;
+    const ids = all.slice(0, MAX_BATCH);
+    if (all.length > MAX_BATCH) {
+      toast({
+        title: "Batch limit",
+        description: `Only the first ${MAX_BATCH} selected rows will be deleted. Deselect extras and run again if needed.`,
+      });
+    }
+    setDeleteLoading(true);
+    try {
+      const res = await locationTrackersApi.bulkDeleteMovements(ids);
+      toast({
+        title: "Movements deleted",
+        description: res.message || `${res.data.deleted} row(s) removed.`,
+      });
+      setSelectedIds(new Set());
+      setListVersion(v => v + 1);
+      setDeleteDialogOpen(false);
+    } catch (e) {
+      console.error(e);
+      toast({
+        title: "Delete failed",
+        description: e instanceof Error ? e.message : "Unexpected error",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -423,16 +516,54 @@ export default function LocationTrackerStatusPage() {
                 pages for the current applied filters (or the full dataset when no filters).
               </CardDescription>
             </div>
-            <Button
-              type="button"
-              variant="secondary"
-              className="shrink-0 gap-2"
-              disabled={pdfLoading || loading}
-              onClick={() => void handleExportPdf()}
-            >
-              <FileDown className="h-4 w-4" />
-              {pdfLoading ? "Building PDF…" : "Print / PDF"}
-            </Button>
+            <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
+              <Button
+                type="button"
+                variant="destructive"
+                className="gap-2"
+                disabled={loading || selectedIds.size === 0 || deleteLoading}
+                onClick={() => setDeleteDialogOpen(true)}
+              >
+                <Trash2 className="h-4 w-4" />
+                {deleteLoading
+                  ? "Deleting…"
+                  : `Delete selected${selectedIds.size ? ` (${selectedIds.size})` : ""}`}
+              </Button>
+              <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete selected movements?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This removes {selectedIds.size} scan row
+                      {selectedIds.size !== 1 ? "s" : ""} from the movement log (
+                      <code className="rounded bg-muted px-1">inbound_scans</code>
+                      ). This cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={deleteLoading}>Cancel</AlertDialogCancel>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      disabled={deleteLoading}
+                      onClick={() => void handleBulkDelete()}
+                    >
+                      {deleteLoading ? "Deleting…" : "Delete"}
+                    </Button>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+              <Button
+                type="button"
+                variant="secondary"
+                className="gap-2"
+                disabled={pdfLoading || loading}
+                onClick={() => void handleExportPdf()}
+              >
+                <FileDown className="h-4 w-4" />
+                {pdfLoading ? "Building PDF…" : "Print / PDF"}
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -449,6 +580,16 @@ export default function LocationTrackerStatusPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-[44px] align-middle">
+                          <Checkbox
+                            disabled={pageIds.length === 0}
+                            checked={
+                              allPageSelected ? true : somePageSelected ? "indeterminate" : false
+                            }
+                            onCheckedChange={onHeaderSelectAllChange}
+                            aria-label="Select all on this page"
+                          />
+                        </TableHead>
                         <TableHead>Date & time</TableHead>
                         <TableHead className="min-w-[200px]">RFID (EPC)</TableHead>
                         <TableHead>Item</TableHead>
@@ -465,6 +606,13 @@ export default function LocationTrackerStatusPage() {
                         const epc = row.epc?.trim() ?? "";
                         return (
                           <TableRow key={row.id}>
+                            <TableCell className="align-middle">
+                              <Checkbox
+                                checked={selectedIds.has(row.id)}
+                                onCheckedChange={v => toggleRowSelected(row.id, v === true)}
+                                aria-label={`Select movement ${row.id}`}
+                              />
+                            </TableCell>
                             <TableCell>
                               <div className="font-medium">{date}</div>
                               <div className="text-xs text-muted-foreground">{time}</div>

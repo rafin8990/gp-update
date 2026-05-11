@@ -23,7 +23,14 @@ const locationCodeParamSchema = z.object({
   }),
 });
 
+const bulkDeleteBodySchema = z.object({
+  body: z.object({
+    ids: z.array(z.coerce.number().int().positive()).min(1).max(200),
+  }),
+});
+
 export const LocationTrackersValidation = {
   listQuerySchema,
   locationCodeParamSchema,
+  bulkDeleteBodySchema,
 };

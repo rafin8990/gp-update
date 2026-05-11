@@ -49,6 +49,13 @@ router.put(
 );
 
 router.get(
+  '/:id/oracle-export',
+  auth,
+  validateRequest(PoTransactionReceiptValidation.oracleExportParamsSchema),
+  PoTransactionReceiptController.downloadOracleExport,
+);
+
+router.get(
   '/:id',
   auth,
   validateRequest(PoTransactionReceiptValidation.getReceiptByIdSchema),

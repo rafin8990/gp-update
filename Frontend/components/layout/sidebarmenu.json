@@ -44,11 +44,6 @@
             "label": "Location Tracker Status"
         },
         {
-            "href": "/self-tracker",
-            "icon": "Activity",
-            "label": "Shelf Tracker"
-        },
-        {
             "href": "/stock",
             "icon": "Package",
             "label": "Stock"
@@ -59,9 +54,9 @@
             "label": "Requisitions"
         },
         {
-            "href": "/packs",
+            "href": "/pick-slips",
             "icon": "Package",
-            "label": "Pack Items"
+            "label": "Pick slips"
         },
         {
             "href": "/outbound/live",

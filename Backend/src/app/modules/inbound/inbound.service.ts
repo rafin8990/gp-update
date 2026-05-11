@@ -4,11 +4,14 @@ import ApiError from '../../../errors/ApiError';
 import pool from '../../../utils/dbClient';
 import redisClient from '../../../utils/redisClient';
 import { io } from '../../../server';
+import { PoolClient } from 'pg';
 import {
   getInboundDedupKey,
   INBOUND_DEDUP_TTL_SEC,
   INBOUND_SOCKET_EVENT,
+  OUTBOUND_INVALID_EPC_EVENT,
 } from './inbound.constant';
+import { isEpcOnReleasedPickSlip } from '../pickSlips/pickSlip.service';
 import {
   IInboundItemSummary,
   IInboundListFilters,
@@ -115,23 +118,29 @@ const isDuplicateByDatabase = async (
   return (result.rowCount ?? 0) > 0;
 };
 
-const getNextStatus = async (epc: string): Promise<'in' | 'out'> => {
+/**
+ * Per EPC + reader location: first event at that location is `in`, then alternates `in` / `out`
+ * based on the last row for the same EPC and same `location_id` (dedup still limits rapid repeats).
+ */
+const getNextStatus = async (epc: string, scanLocationId: number | null): Promise<'in' | 'out'> => {
   const result = await pool.query<{ status: 'in' | 'out' }>(
     `
       SELECT status
       FROM inbound_scans
       WHERE epc = $1
+        AND location_id IS NOT DISTINCT FROM $2
       ORDER BY scanned_at DESC, id DESC
       LIMIT 1
     `,
-    [epc],
+    [epc, scanLocationId],
   );
 
   if ((result.rowCount ?? 0) === 0) {
     return 'in';
   }
 
-  return result.rows[0].status === 'in' ? 'out' : 'in';
+  const last = result.rows[0];
+  return last.status === 'in' ? 'out' : 'in';
 };
 
 const buildLivePayload = (
@@ -159,6 +168,64 @@ const buildLivePayload = (
   timestamp,
 });
 
+/**
+ * Decrement stock for outbound gate scan (location_id=1, status=out).
+ * Uses FIFO across stock rows for this PO + item and never allows negative stock.
+ */
+const decrementStockForOutbound = async (
+  client: PoolClient,
+  poHeaderId: number,
+  itemId: number,
+  quantityToDecrement: number,
+): Promise<void> => {
+  const qty = Number(quantityToDecrement ?? 0);
+  if (!(qty > 0)) {
+    return;
+  }
+
+  const stockRows = await client.query<{ id: number; quantity: string }>(
+    `
+      SELECT id, quantity::text
+      FROM stock
+      WHERE po_header_id = $1
+        AND item_id = $2
+        AND quantity > 0
+      ORDER BY created_at ASC, id ASC
+      FOR UPDATE
+    `,
+    [poHeaderId, itemId],
+  );
+
+  const totalAvailable = stockRows.rows.reduce(
+    (sum, row) => sum + Number(row.quantity ?? 0),
+    0,
+  );
+
+  if (totalAvailable < qty) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      `Insufficient stock for outbound: required ${qty}, available ${totalAvailable}`,
+    );
+  }
+
+  let remaining = qty;
+  for (const row of stockRows.rows) {
+    if (remaining <= 0) break;
+    const rowQty = Number(row.quantity ?? 0);
+    if (rowQty <= 0) continue;
+    const deduct = Math.min(rowQty, remaining);
+    await client.query(
+      `
+        UPDATE stock
+        SET quantity = quantity - $2, updated_at = NOW()
+        WHERE id = $1
+      `,
+      [row.id, deduct],
+    );
+    remaining -= deduct;
+  }
+};
+
 const recordScan = async (payload: IScanRequest): Promise<IInboundScanResponse> => {
   const epc = payload.epc.trim();
 
@@ -178,44 +245,84 @@ const recordScan = async (payload: IScanRequest): Promise<IInboundScanResponse> 
   }
 
   const lookup = await getLookupByEpc(epc, locationId);
-  const status = await getNextStatus(epc);
+  const status = await getNextStatus(epc, locationId);
   const scannedAt = formatTimestamp(payload.timestamp);
 
-  const insertResult = await pool.query<IInboundScan>(
-    `
-      INSERT INTO inbound_scans (
+  /** Dock outbound gate: only when reader location id is exactly 1 and scan is OUT */
+  if (status === 'out' && locationId === 1) {
+    const allowed = await isEpcOnReleasedPickSlip(epc);
+    if (!allowed) {
+      if (io) {
+        io.emit(OUTBOUND_INVALID_EPC_EVENT, {
+          epc,
+          location_id: locationId,
+          timestamp: new Date().toISOString(),
+        });
+      }
+      throw new ApiError(
+        httpStatus.FORBIDDEN,
+        'EPC is not on a released pick slip — outbound blocked at this dock',
+      );
+    }
+  }
+
+  const client = await pool.connect();
+  let insertResult;
+  try {
+    await client.query('BEGIN');
+
+    insertResult = await client.query<IInboundScan>(
+      `
+        INSERT INTO inbound_scans (
+          epc,
+          po_code_id,
+          po_header_id,
+          item_id,
+          location_id,
+          status,
+          rssi,
+          device_id,
+          quantity,
+          serial_start,
+          serial_end,
+          scanned_at,
+          created_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
+        RETURNING *
+      `,
+      [
         epc,
-        po_code_id,
-        po_header_id,
-        item_id,
-        location_id,
+        lookup.id,
+        lookup.po_header_id,
+        lookup.item_id,
+        lookup.location_id ?? null,
         status,
-        rssi,
-        device_id,
-        quantity,
-        serial_start,
-        serial_end,
-        scanned_at,
-        created_at
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
-      RETURNING *
-    `,
-    [
-      epc,
-      lookup.id,
-      lookup.po_header_id,
-      lookup.item_id,
-      lookup.location_id ?? null,
-      status,
-      payload.rssi !== undefined ? String(payload.rssi) : null,
-      payload.deviceId ?? null,
-      lookup.quantity ?? 0,
-      lookup.serial_start ? Number(lookup.serial_start) : null,
-      lookup.serial_end ? Number(lookup.serial_end) : null,
-      scannedAt,
-    ],
-  );
+        payload.rssi !== undefined ? String(payload.rssi) : null,
+        payload.deviceId ?? null,
+        lookup.quantity ?? 0,
+        lookup.serial_start ? Number(lookup.serial_start) : null,
+        lookup.serial_end ? Number(lookup.serial_end) : null,
+        scannedAt,
+      ],
+    );
+
+    if (status === 'out' && locationId === 1) {
+      await decrementStockForOutbound(
+        client,
+        Number(lookup.po_header_id),
+        Number(lookup.item_id),
+        Number(lookup.quantity ?? 0),
+      );
+    }
+
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 
   await redisClient.set(dedupKey, String(insertResult.rows[0].id), INBOUND_DEDUP_TTL_SEC);
 

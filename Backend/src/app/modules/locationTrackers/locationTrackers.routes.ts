@@ -6,6 +6,13 @@ import { LocationTrackersValidation } from './locationTrackers.validation';
 
 const router = express.Router();
 
+router.post(
+  '/bulk-delete',
+  auth,
+  validateRequest(LocationTrackersValidation.bulkDeleteBodySchema),
+  LocationTrackersController.bulkDelete,
+);
+
 router.get('/stats', auth, LocationTrackersController.stats);
 router.get('/current-status', auth, LocationTrackersController.currentStatus);
 router.get(

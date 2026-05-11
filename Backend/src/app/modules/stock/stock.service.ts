@@ -3,6 +3,8 @@ import pool from '../../../utils/dbClient';
 import {
   IAggregatedStock,
   ILiveStockData,
+  IStockInboundScanRow,
+  IStockInboundScanRowByPo,
   IStockListFilters,
   IStockRow,
   IStockStats,
@@ -182,6 +184,127 @@ const getAggregatedStocks = async (): Promise<IAggregatedStock[]> => {
   }));
 };
 
+const mapInboundScanRow = (row: any, rowSource: 'inbound_scan' | 'po_code'): IStockInboundScanRow => ({
+  id: Number(row.id),
+  epc: String(row.epc ?? ''),
+  status: row.status === 'out' ? 'out' : 'in',
+  quantity: Number(row.quantity ?? 0),
+  serial_start: row.serial_start != null ? String(row.serial_start) : null,
+  serial_end: row.serial_end != null ? String(row.serial_end) : null,
+  scanned_at: new Date(row.scanned_at).toISOString(),
+  location_name: row.location_name ?? null,
+  location_code: row.location_code ?? null,
+  row_source: rowSource,
+});
+
+/**
+ * All inbound scan rows for a purchase order (filter by `purchase_orders.po_number`).
+ */
+const listInboundScansByPoNumber = async (poNumber: string): Promise<IStockInboundScanRowByPo[]> => {
+  const result = await pool.query(
+    `
+      SELECT
+        scan.id,
+        scan.epc,
+        scan.status,
+        COALESCE(scan.quantity, 0)::float8 AS quantity,
+        scan.serial_start::text AS serial_start,
+        scan.serial_end::text AS serial_end,
+        scan.scanned_at,
+        loc.name AS location_name,
+        loc.location_code,
+        scan.item_id::text AS item_number,
+        COALESCE(im.description, '') AS item_description
+      FROM inbound_scans scan
+      JOIN purchase_orders po ON po.po_header_id = scan.po_header_id
+      LEFT JOIN locations loc ON loc.id = scan.location_id
+      LEFT JOIN erp_item_master im ON im.item = scan.item_id
+      WHERE po.po_number = $1
+      ORDER BY scan.item_id ASC,
+        loc.location_code NULLS LAST,
+        scan.serial_start NULLS LAST,
+        scan.serial_end NULLS LAST,
+        scan.scanned_at ASC,
+        scan.id ASC
+    `,
+    [poNumber],
+  );
+
+  return result.rows.map((row: any) => ({
+    ...mapInboundScanRow(row, 'inbound_scan'),
+    item_number: String(row.item_number ?? ''),
+    item_description: String(row.item_description ?? ''),
+  }));
+};
+
+/**
+ * RFID lines for a stock row (PO + item + lot).
+ * Uses `inbound_scans` → `po_codes` (same link as gate scan) and matches lot via `stock.lot_number`
+ * (not location_code — warehouse location is often not the lot id).
+ * If there are no scans yet, returns rows from `po_codes` for this PO + item + lot (issued tags / serials).
+ */
+const listInboundScansForStockLine = async (
+  poNumber: string,
+  itemNumber: string,
+  lotNo: string,
+): Promise<IStockInboundScanRow[]> => {
+  const scanResult = await pool.query(
+    `
+      SELECT DISTINCT ON (scan.id)
+        scan.id,
+        scan.epc,
+        scan.status,
+        COALESCE(scan.quantity, 0)::float8 AS quantity,
+        scan.serial_start::text AS serial_start,
+        scan.serial_end::text AS serial_end,
+        scan.scanned_at,
+        loc.name AS location_name,
+        loc.location_code
+      FROM inbound_scans scan
+      INNER JOIN po_codes pc ON pc.id = scan.po_code_id
+      INNER JOIN purchase_orders po ON po.po_header_id = scan.po_header_id
+      INNER JOIN stock s ON s.po_header_id = po.po_header_id
+        AND s.item_id = pc.item_id
+        AND TRIM(COALESCE(s.lot_number, '')) = TRIM($3)
+      LEFT JOIN locations loc ON loc.id = scan.location_id
+      WHERE po.po_number = $1
+        AND pc.item_id::text = $2
+      ORDER BY scan.id, scan.scanned_at DESC
+    `,
+    [poNumber, itemNumber, lotNo],
+  );
+
+  if ((scanResult.rowCount ?? 0) > 0) {
+    return scanResult.rows.map((row: any) => mapInboundScanRow(row, 'inbound_scan'));
+  }
+
+  const poCodeResult = await pool.query(
+    `
+      SELECT
+        pc.id,
+        pc.rfid_code AS epc,
+        'in'::varchar AS status,
+        COALESCE(pc.quantity, 0)::float8 AS quantity,
+        pc.serial_start::text AS serial_start,
+        pc.serial_end::text AS serial_end,
+        pc.created_at AS scanned_at,
+        NULL::text AS location_name,
+        NULL::text AS location_code
+      FROM po_codes pc
+      INNER JOIN purchase_orders po ON po.po_header_id = pc.po_header_id
+      INNER JOIN stock s ON s.po_header_id = pc.po_header_id
+        AND s.item_id = pc.item_id
+        AND TRIM(COALESCE(s.lot_number, '')) = TRIM($3)
+      WHERE po.po_number = $1
+        AND pc.item_id::text = $2
+      ORDER BY pc.serial_start NULLS LAST, pc.serial_end NULLS LAST, pc.id ASC
+    `,
+    [poNumber, itemNumber, lotNo],
+  );
+
+  return poCodeResult.rows.map((row: any) => mapInboundScanRow(row, 'po_code'));
+};
+
 const getStockByPoItemLot = async (
   poNumber: string,
   itemNumber: string,
@@ -212,4 +335,6 @@ export const StockService = {
   getLiveStockData,
   getAggregatedStocks,
   getStockByPoItemLot,
+  listInboundScansForStockLine,
+  listInboundScansByPoNumber,
 };

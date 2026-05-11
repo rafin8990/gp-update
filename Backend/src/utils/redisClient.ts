@@ -1,4 +1,5 @@
 import { createClient, RedisClientType } from 'redis';
+import config from '../config';
 let client: RedisClientType | null = null;
 let isConnected = false;
 
@@ -9,7 +10,7 @@ async function connect(): Promise<void> {
 
   try {
     client = createClient({
-      url: "redis://:nothing567Ether@167.71.201.117:6379",
+      url: config.redis_url,
     });
 
     client.on('error', (err) => {

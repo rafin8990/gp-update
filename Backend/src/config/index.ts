@@ -19,5 +19,6 @@ export default {
   jwt_expires_in: process.env.JWT_EXPIRES_IN || '1d',
   jwt_refresh_secret: process.env.JWT_REFRESH_SECRET || 'your-super-secret-refresh-key-change-this-in-production',
   jwt_refresh_expires_in: process.env.JWT_REFRESH_EXPIRES_IN || '365d',
-  redis_url: '188.166.232.67:6089',
+  redis_url: process.env.REDIS_URL || 'redis://127.0.0.1:6379',
+  // redis_url: '188.166.232.67:6089',
 };

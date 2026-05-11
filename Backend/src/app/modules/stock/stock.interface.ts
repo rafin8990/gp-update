@@ -52,3 +52,24 @@ export interface IStockListFilters {
   item_number?: string;
   lot_no?: string;
 }
+
+/** One inbound scan line contributing to stock (RFID + optional serial range). */
+export interface IStockInboundScanRow {
+  id: number;
+  epc: string;
+  status: 'in' | 'out';
+  quantity: number;
+  serial_start: string | null;
+  serial_end: string | null;
+  scanned_at: string;
+  location_name: string | null;
+  location_code: string | null;
+  /** `po_code` = master row from `po_codes` when no gate scan exists yet for this stock line. */
+  row_source?: 'inbound_scan' | 'po_code';
+}
+
+/** Inbound scan line for a PO (all items/lots under that PO). */
+export interface IStockInboundScanRowByPo extends IStockInboundScanRow {
+  item_number: string;
+  item_description: string;
+}

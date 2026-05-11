@@ -86,6 +86,35 @@ const getStockByPoItemLot = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
+const listInboundScansForStockLine = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { po_number, item_number, lot_no } = req.params;
+    const data = await StockService.listInboundScansForStockLine(po_number, item_number, lot_no);
+    res.status(httpStatus.OK).json({
+      success: true,
+      message:
+        'RFID / serial lines for this stock lot (from inbound scans or po_codes when not scanned yet)',
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const listInboundScansByPoNumber = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { po_number } = req.params;
+    const data = await StockService.listInboundScansByPoNumber(po_number);
+    res.status(httpStatus.OK).json({
+      success: true,
+      message: 'Inbound scan lines for this PO retrieved successfully',
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const StockController = {
   listStocks,
   getStockStats,
@@ -93,4 +122,6 @@ export const StockController = {
   getLiveStockData,
   getAggregatedStocks,
   getStockByPoItemLot,
+  listInboundScansForStockLine,
+  listInboundScansByPoNumber,
 };

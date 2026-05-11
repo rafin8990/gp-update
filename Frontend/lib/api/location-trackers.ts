@@ -97,4 +97,12 @@ export const locationTrackersApi = {
     const response = await axiosInstance.get(`/location-trackers/location/${locationCode}`);
     return response.data;
   },
+
+  /** Bulk-delete movement rows (`inbound_scans` by id). Max 200 ids per request. */
+  bulkDeleteMovements: async (
+    ids: number[],
+  ): Promise<{ success: boolean; message: string; data: { deleted: number } }> => {
+    const response = await axiosInstance.post('/location-trackers/bulk-delete', { ids });
+    return response.data;
+  },
 };

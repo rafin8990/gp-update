@@ -101,6 +101,12 @@ const listReceiptsQuerySchema = z.object({
   }),
 });
 
+const oracleExportParamsSchema = z.object({
+  params: z.object({
+    id: z.string().regex(/^\d+$/),
+  }),
+});
+
 export const PoTransactionReceiptValidation = {
   createReceiptWithLotsSchema,
   createReceiptSchema,
@@ -111,4 +117,5 @@ export const PoTransactionReceiptValidation = {
   getReceiptByIdSchema,
   getLotByIdSchema,
   listReceiptsQuerySchema,
+  oracleExportParamsSchema,
 };

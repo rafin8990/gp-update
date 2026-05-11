@@ -13,6 +13,12 @@ try {
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async redirects() {
+    return [
+      { source: '/packs', destination: '/pick-slips', permanent: false },
+      { source: '/packs/:path*', destination: '/pick-slips/:path*', permanent: false },
+    ];
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },
