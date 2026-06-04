@@ -1,4 +1,4 @@
-## GP Warehouse – Full Startup Guide
+## EV Warehouse – Full Startup Guide
 
 This guide explains how to start **Backend API**, **Web Frontend (Next.js)**, and the **Android UHF app**, and how they connect for real‑time inbound updates.
 

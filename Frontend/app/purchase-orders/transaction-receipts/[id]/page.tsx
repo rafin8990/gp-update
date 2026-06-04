@@ -231,8 +231,8 @@ export default function PoTransactionReceiptViewPage() {
   useEffect(() => {
     let isMounted = true;
 
-    const svgToPngDataUrl = async (svgPath: string): Promise<string> => {
-      const svgText = await fetch(svgPath).then(res => res.text());
+    const svgToPngDataUrl = async (svEVath: string): Promise<string> => {
+      const svgText = await fetch(svEVath).then(res => res.text());
       const svgBlob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
       const svgUrl = URL.createObjectURL(svgBlob);
 

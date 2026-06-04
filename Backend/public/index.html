@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GP Warehouse Management Dashboard</title>
+    <title>EV Warehouse Management Dashboard</title>
 
     <!-- Favicon -->
     <link
@@ -50,7 +50,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: 
+        background:
           radial-gradient(circle at 25% 25%, rgba(56, 189, 248, 0.15) 0%, transparent 50%),
           radial-gradient(circle at 75% 75%, rgba(168, 85, 247, 0.15) 0%, transparent 50%),
           radial-gradient(circle at 50% 50%, rgba(34, 197, 94, 0.1) 0%, transparent 50%);
@@ -72,7 +72,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background-image: 
+        background-image:
           radial-gradient(2px 2px at 20px 30px, rgba(255, 255, 255, 0.1), transparent),
           radial-gradient(2px 2px at 40px 70px, rgba(255, 255, 255, 0.1), transparent),
           radial-gradient(1px 1px at 90px 40px, rgba(255, 255, 255, 0.1), transparent),
@@ -666,7 +666,7 @@
           <div class="logo-container">
             <div class="warehouse-icon">🏭</div>
           </div>
-          <div class="brand-name">GP Warehouse</div>
+          <div class="brand-name">EV Warehouse</div>
           <div class="brand-subtitle">Management System</div>
         </div>
 
@@ -829,7 +829,7 @@
             },
             signal: AbortSignal.timeout(5000) // 5 second timeout
           });
-          
+
           if (!response.ok) throw new Error('Failed to fetch system metrics');
 
           const data = await response.json();
@@ -849,7 +849,7 @@
             },
             signal: AbortSignal.timeout(5000) // 5 second timeout
           });
-          
+
           if (!response.ok) throw new Error('Failed to fetch API endpoints');
 
           const data = await response.json();
@@ -950,7 +950,7 @@
             },
             signal: AbortSignal.timeout(5000) // 5 second timeout
           });
-          
+
           if (response.ok) {
             const data = await response.json();
             document.getElementById('statusIndicator').className = 'status-dot';
@@ -1007,7 +1007,7 @@
           // Check server status every 30 seconds
           setInterval(checkServerStatus, 30000);
 
-          showMessage('GP Warehouse dashboard loaded successfully!', 'success');
+          showMessage('EV Warehouse dashboard loaded successfully!', 'success');
         } catch (error) {
           showMessage(
             'Error initializing warehouse dashboard: ' + error.message,
@@ -1025,4 +1025,3 @@
     </script>
   </body>
 </html>
-

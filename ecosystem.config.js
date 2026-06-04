@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: 'GP-Engine',
+      name: 'EV-Engine',
       script: 'node_modules/.bin/ts-node-dev',
       cwd: '/var/www/grameenphone_warehouse_management/Backend',
       args: '--respawn --transpile-only src/server.ts',
@@ -32,7 +32,7 @@ module.exports = {
       // Remove the ts-node-dev script and args lines above
     },
     {
-      name: 'GP-Client',
+      name: 'EV-Client',
       script: 'node_modules/next/dist/bin/next',
       cwd: '/var/www/grameenphone_warehouse_management/Frontend',
       args: 'dev -p 3005',
@@ -64,4 +64,3 @@ module.exports = {
     }
   ]
 };
-

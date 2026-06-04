@@ -141,7 +141,7 @@ export async function fetchDashboardBundle(): Promise<DashboardBundle> {
 
   const poSample =
     poSampleRes.status === "fulfilled" ? poSampleRes.value.data ?? [] : [];
-  const pendingPOs = countOpenPurchaseOrders(poSample);
+  const pendinEVOs = countOpenPurchaseOrders(poSample);
   const totalVendors = uniqueSupplierCount(poSample);
 
   const inboundEnvelope =
@@ -172,7 +172,7 @@ export async function fetchDashboardBundle(): Promise<DashboardBundle> {
     { name: "purchase_orders", value: totalPOs, icon: "/dashboard/vendors.svg", label: "Total Purchase Orders" },
     {
       name: "pending_purchase_orders",
-      value: pendingPOs,
+      value: pendinEVOs,
       icon: "/dashboard/readers.svg",
       label: "Open POs (pending / partial, sample)",
     },

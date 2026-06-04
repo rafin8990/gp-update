@@ -3,19 +3,19 @@
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
-interface LoadingProps {
+interface LoadinEVrops {
   className?: string;
   variant?: 'fullscreen' | 'spinner' | 'text';
   size?: 'sm' | 'md' | 'lg';
   text?: string;
 }
 
-export function Loading({ 
-  className, 
+export function Loading({
+  className,
   variant = 'fullscreen',
   size = 'md',
   text = 'Loading...'
-}: LoadingProps) {
+}: LoadinEVrops) {
   if (variant === 'spinner') {
     return (
       <div className={cn("flex justify-center items-center", className)}>
@@ -62,4 +62,4 @@ export function Loading({
       </div>
     </div>
   );
-} 
+}

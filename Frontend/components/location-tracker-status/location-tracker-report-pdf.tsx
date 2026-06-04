@@ -121,7 +121,7 @@ export function LocationTrackerReportPdfDocument({
   }
 
   return (
-    <Document title="Location tracker report" author="GP Warehouse">
+    <Document title="Location tracker report" author="EV Warehouse">
       {pages.map((chunk, pageIndex) => (
         <Page key={pageIndex} size="A4" orientation="landscape" style={styles.page} wrap>
           {pageIndex === 0 && (

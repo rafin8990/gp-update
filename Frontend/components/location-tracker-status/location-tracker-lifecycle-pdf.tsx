@@ -101,7 +101,7 @@ export function LocationTrackerLifecyclePdfDocument({
   if (pages.length === 0) pages.push([]);
 
   return (
-    <Document title={`RFID lifecycle — ${epc.slice(0, 40)}`} author="GP Warehouse">
+    <Document title={`RFID lifecycle — ${epc.slice(0, 40)}`} author="EV Warehouse">
       {pages.map((chunk, pageIndex) => (
         <Page key={pageIndex} size="A4" orientation="landscape" style={styles.page} wrap>
           {pageIndex === 0 ? (

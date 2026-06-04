@@ -22,17 +22,17 @@ interface IPurchaseOrderLineItem {
   line_status_code: string;
   line_status_name: string;
   line_type: string;
-  
+
   // Item information
   item_id: number | null;
   item_code: string;
   item_description: string;
   category_code: string;
-  
+
   // UOM
   uom_code: string;
   uom_name: string;
-  
+
   // Quantity and pricing
   quantity: number;
   unit_price: number;
@@ -40,7 +40,7 @@ interface IPurchaseOrderLineItem {
   line_amount: number;
   tax_amount: number;
   total_amount: number;
-  
+
 }
 
 export default function NewPurchaseOrderPage() {
@@ -57,35 +57,35 @@ export default function NewPurchaseOrderPage() {
     status_code: 'APPROVED',
     status_name: '',
     order_status: 'pending' as 'pending' | 'partially_received' | 'full_received',
-    
+
     // Procurement BU
     procurement_bu_id: '',
     procurement_bu_name: '',
-    
+
     // Supplier
     supplier_id: '',
     supplier_name: '',
     supplier_site_id: '',
     supplier_site_code: '',
-    
+
     // Buyer
     buyer_id: '',
     buyer_name: '',
-    
+
     // Shipping
     ship_to_location_id: '',
     ship_to_location_code: '',
     ship_to_address: '',
-    
+
     // Financial
     currency_code: '',
     ordered_amount: '',
     tax_amount: '',
     total_amount: '',
-    
+
     // Dates
     order_date: '',
-    
+
     // System
     source_system: 'oracle_fusion',
   });
@@ -172,11 +172,11 @@ export default function NewPurchaseOrderPage() {
       // Create lines with all fields
       const lines = purchaseOrderItems.map((poItem, index) => {
         // Find the item from available items if item_code is provided
-        const item = availableItems.find(i => 
-          i.item.toString() === poItem.item_code || 
+        const item = availableItems.find(i =>
+          i.item.toString() === poItem.item_code ||
           (poItem.item_id && i.item === poItem.item_id)
         );
-        
+
         // Use Oracle Fusion POLineId if available (stored when generated from Oracle)
         // Otherwise generate a unique ID
         let po_line_id = po_header_id + index + 1;
@@ -184,14 +184,14 @@ export default function NewPurchaseOrderPage() {
           // Use the stored Oracle Fusion POLineId
           po_line_id = (poItem as any)._oraclePOLineId;
         }
-        
+
         // Convert numeric fields to numbers (not strings)
         const quantityNum = poItem.quantity != null ? Number(poItem.quantity) : null;
         const unitPriceNum = poItem.unit_price != null ? Number(poItem.unit_price) : null;
         const lineAmountNum = poItem.line_amount != null ? Number(poItem.line_amount) : null;
         const taxAmountNum = poItem.tax_amount != null ? Number(poItem.tax_amount) : null;
         const totalAmountNum = poItem.total_amount != null ? Number(poItem.total_amount) : null;
-        
+
         // Ensure item_id is always a number or null
         let itemIdNum: number | null = null;
         if (item) {
@@ -203,7 +203,7 @@ export default function NewPurchaseOrderPage() {
             itemIdNum = null;
           }
         }
-        
+
         return {
           po_line_id: po_line_id,
           po_header_id: po_header_id, // Include po_header_id for reference
@@ -313,7 +313,7 @@ export default function NewPurchaseOrderPage() {
   const updatePurchaseOrderItem = (index: number, field: keyof IPurchaseOrderLineItem, value: any) => {
     const updatedItems = [...purchaseOrderItems];
     updatedItems[index] = { ...updatedItems[index], [field]: value };
-    
+
     // Auto-calculate line_amount and total_amount when quantity or unit_price changes
     if (field === 'quantity' || field === 'unit_price') {
       const item = updatedItems[index];
@@ -322,7 +322,7 @@ export default function NewPurchaseOrderPage() {
       item.line_amount = qty * price;
       item.total_amount = item.line_amount + parseFloat(item.tax_amount?.toString() || '0');
     }
-    
+
     setPurchaseOrderItems(updatedItems);
   };
 
@@ -390,7 +390,7 @@ export default function NewPurchaseOrderPage() {
         Buyer: "Chowdhury, Md. Rasel",
         ShipToLocationId: 300000005327246,
         ShipToLocationCode: "IPS-Sales",
-        ShipToLocationAddress: "GP House Bashundhara, Baridhara, Dhaka, Dhaka, Bhatara, Khilkhet, 1229",
+        ShipToLocationAddress: "EV House Bashundhara, Baridhara, Dhaka, Dhaka, Bhatara, Khilkhet, 1229",
         CurrencyCode: "BDT",
         Ordered: 15000000.00,
         TotalTax: 0,
@@ -425,7 +425,7 @@ export default function NewPurchaseOrderPage() {
     try {
       // Map Oracle Fusion header to our form data
       const header = oraclePayload.header;
-      
+
       // Map order_status from StatusCode
       let orderStatus: 'pending' | 'partially_received' | 'full_received' = 'pending';
       if (header.StatusCode === 'CLOSED' || header.Status === 'Closed') {
@@ -522,8 +522,8 @@ export default function NewPurchaseOrderPage() {
             <div className="flex items-center justify-between">
               <CardTitle>Purchase Order Information</CardTitle>
               <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={handleGeneratePO}
                   className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
                 >
@@ -576,7 +576,7 @@ export default function NewPurchaseOrderPage() {
                     <Label htmlFor="order_status">Order Status</Label>
                     <Select
                       value={formData.order_status}
-                      onValueChange={(value: 'pending' | 'partially_received' | 'full_received') => 
+                      onValueChange={(value: 'pending' | 'partially_received' | 'full_received') =>
                         setFormData(prev => ({ ...prev, order_status: value }))
                       }
                     >
@@ -812,8 +812,8 @@ export default function NewPurchaseOrderPage() {
                   <div className="space-y-3">
                     {purchaseOrderItems.map((item, index) => {
                       // Find selected item by item_code or item_id
-                      const selectedItem = availableItems.find(i => 
-                        i.item.toString() === item.item_code || 
+                      const selectedItem = availableItems.find(i =>
+                        i.item.toString() === item.item_code ||
                         (item.item_id && i.item === item.item_id)
                       );
                       return (
