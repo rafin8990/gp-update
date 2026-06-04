@@ -122,7 +122,7 @@ const createReceiptWithLots = async (
       receipt.document_number ?? null,
       receipt.document_line_number ?? '1',
       receipt.document_schedule_number ?? '1',
-      receipt.business_unit ?? 'Grameenphone Ltd.',
+      receipt.business_unit ?? 'ev Ltd.',
       receipt.sub_inventory ?? 'prod',
       receipt.uom ?? null,
     ];
@@ -196,7 +196,7 @@ const createReceipt = async (
     receipt.document_number ?? null,
     receipt.document_line_number ?? '1',
     receipt.document_schedule_number ?? '1',
-    receipt.business_unit ?? 'Grameenphone Ltd.',
+    receipt.business_unit ?? 'ev Ltd.',
     receipt.sub_inventory ?? 'prod',
     receipt.uom ?? null,
   ];

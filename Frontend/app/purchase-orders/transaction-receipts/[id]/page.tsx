@@ -93,7 +93,7 @@ const ReceiptVoucherPdfDocument = ({
           {logoSrc ? <PdfImage src={logoSrc} style={pdfStyles.logo} /> : null}
           <View>
             <Text style={pdfStyles.title}>PO Receipt Voucher</Text>
-            <Text style={pdfStyles.subtitle}>Grameenphone Warehouse Management</Text>
+            <Text style={pdfStyles.subtitle}>ev Warehouse Management</Text>
           </View>
         </View>
         <View style={pdfStyles.headerRight}>
@@ -261,7 +261,7 @@ export default function PoTransactionReceiptViewPage() {
 
     const loadLogoAsDataUrl = async () => {
       try {
-        const logoDataUrl = await svgToPngDataUrl('/logo.svg');
+        const logoDataUrl = await svgToPngDataUrl('/logo/ev-logo.svg');
         if (isMounted) {
           setLogoSrc(logoDataUrl);
           return;
@@ -434,10 +434,10 @@ export default function PoTransactionReceiptViewPage() {
               >
               <div className="flex items-start justify-between border-b-2 pb-6 gap-6">
                 <div className="flex items-start gap-4">
-                  <img src="/logo.svg" alt="Grameenphone logo" className="h-20 w-auto object-contain" />
+                  <img src="/logo/ev-logo.svg" alt="ev logo" className="h-20 w-auto object-contain" />
                   <div>
                     <h2 className="text-4xl font-bold">PO Receipt Voucher</h2>
-                    <p className="text-xl text-gray-600 mt-2">Grameenphone Warehouse Management</p>
+                    <p className="text-xl text-gray-600 mt-2">ev Warehouse Management</p>
                   </div>
                 </div>
                 <div className="text-right text-xl leading-9">

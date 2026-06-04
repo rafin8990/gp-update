@@ -48,7 +48,7 @@ export default function EditPoTransactionReceiptPage() {
     document_number: '',
     document_line_number: '1',
     document_schedule_number: '1',
-    business_unit: 'Grameenphone Ltd.',
+    business_unit: 'ev Ltd.',
     sub_inventory: 'prod',
     uom: '',
   });
@@ -91,7 +91,7 @@ export default function EditPoTransactionReceiptPage() {
           document_number: data.receipt.document_number || '',
           document_line_number: data.receipt.document_line_number || '1',
           document_schedule_number: data.receipt.document_schedule_number || '1',
-          business_unit: data.receipt.business_unit || 'Grameenphone Ltd.',
+          business_unit: data.receipt.business_unit || 'ev Ltd.',
           sub_inventory: data.receipt.sub_inventory || 'prod',
           uom: data.receipt.uom || '',
         });
@@ -192,7 +192,7 @@ export default function EditPoTransactionReceiptPage() {
           document_number: form.document_number || null,
           document_line_number: form.document_line_number || '1',
           document_schedule_number: form.document_schedule_number || '1',
-          business_unit: form.business_unit || 'Grameenphone Ltd.',
+          business_unit: form.business_unit || 'ev Ltd.',
           sub_inventory: form.sub_inventory || 'prod',
           uom: form.uom || null,
         },

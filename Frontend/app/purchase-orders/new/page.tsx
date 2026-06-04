@@ -381,7 +381,7 @@ export default function NewPurchaseOrderPage() {
         StatusCode: "OPEN",
         Status: "Open",
         ProcurementBUId: 300000002682225,
-        ProcurementBU: "Grameenphone Ltd.",
+        ProcurementBU: "ev Ltd.",
         SupplierId: 300000005154086,
         Supplier: "GALAXY TECHNOLOGY (BANGLADESH) LTD.",
         SupplierSiteId: 300000162990875,

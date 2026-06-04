@@ -108,15 +108,15 @@ export default function DashboardPage() {
             <div className="flex items-center gap-6">
               <div className="rounded-lg bg-white p-3 shadow-md">
                 <Image
-                  src="/logo/Grameenphone-Symbol.png"
-                  alt="Grameenphone Logo"
+                  src="/logo/ev-logo.svg"
+                  alt="ev Logo"
                   width={80}
                   height={80}
                   className="object-contain"
                 />
               </div>
               <div className="text-white">
-                <h1 className="mb-1 text-3xl font-bold">Grameenphone Warehouse Management System</h1>
+                <h1 className="mb-1 text-3xl font-bold">ev Warehouse Management System</h1>
                 <p className="text-sm text-white/90">
                   Live metrics from stock, inbound scans, purchase orders, and locations
                 </p>
