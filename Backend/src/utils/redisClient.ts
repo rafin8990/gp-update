@@ -11,6 +11,10 @@ async function connect(): Promise<void> {
   try {
     client = createClient({
       url: config.redis_url,
+      socket: {
+        connectTimeout: 5000,
+        reconnectStrategy: retries => (retries > 2 ? false : 500),
+      },
     });
 
     client.on('error', (err) => {
@@ -32,7 +36,12 @@ async function connect(): Promise<void> {
       isConnected = false;
     });
 
-    await client.connect();
+    await Promise.race([
+      client.connect(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Redis connection timeout')), 5000)
+      ),
+    ]);
 
     try {
       await client.ping();
@@ -42,6 +51,15 @@ async function connect(): Promise<void> {
       console.error('⚠️  Redis ping failed after connect:', err);
     }
   } catch (error) {
+    isConnected = false;
+    if (client) {
+      try {
+        await client.disconnect();
+      } catch {
+        // ignore cleanup errors
+      }
+      client = null;
+    }
     console.error('Failed to connect to Redis:', error);
     console.log('⚠️  Continuing without Redis - some features may be limited');
   }

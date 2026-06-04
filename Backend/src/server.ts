@@ -44,13 +44,23 @@ async function bootstrap() {
       }
     }
 
-    // Test Redis connection
+    // Test Redis connection (non-blocking — server starts even if Redis is down)
     logger.info('🔍 Testing Redis connection...');
-    await redisClient.connect();
-    if (redisClient.isReady()) {
-      logger.info('✅ Redis connected successfully');
-    } else {
+    try {
+      await Promise.race([
+        redisClient.connect(),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Redis connection timeout')), 6000)
+        ),
+      ]);
+      if (redisClient.isReady()) {
+        logger.info('✅ Redis connected successfully');
+      } else {
+        logger.warn('⚠️  Redis not available - continuing without Redis');
+      }
+    } catch (redisError) {
       logger.warn('⚠️  Redis not available - continuing without Redis');
+      logger.warn(`   ${(redisError as Error).message}`);
     }
   } catch (error) {
     const err = error as Error;
